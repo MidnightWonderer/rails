@@ -815,12 +815,14 @@ module ActiveRecord
 
       def index_name(table_name, options) #:nodoc:
         if Hash === options
-          if options[:column]
-            "index_#{table_name}_on_#{Array(options[:column]) * '_and_'}"
-          elsif options[:name]
-            options[:name]
-          else
-            raise ArgumentError, "You must specify the index name"
+          options.fetch(:name) do
+            column = options.fetch(:column) do
+              raise ArgumentError, "You must specify the index name"
+            end
+            identifier = "[index]_#{table_name}_[on]_#{Array(column) * '_[and]_'}"
+            hashed_identifier = Digest::SHA256.hexdigest(identifier).first(10)
+
+            "index_rails_#{hashed_identifier}"
           end
         else
           index_name(table_name, index_name_options(options))
